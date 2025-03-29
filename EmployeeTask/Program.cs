@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
@@ -41,6 +42,26 @@ namespace EmployeeTask
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(Program).Assembly));
             builder.Services.AddScoped<IAuditService, AuditService>();
+
+            builder.Logging.ClearProviders();
+
+            var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+
+            Log.Logger = new LoggerConfiguration()
+                  .ReadFrom.Configuration(configuration)
+                  .Enrich.WithMachineName()
+                  .Enrich.WithThreadId()
+                  .WriteTo.Console()
+                  .WriteTo.Seq("http://localhost:5341/")
+                  .WriteTo.MSSqlServer(connectionString: configuration.GetConnectionString("DefaultConnection"),
+                  sinkOptions: new Serilog.Sinks.MSSqlServer.MSSqlServerSinkOptions
+                  {
+                      TableName = "Logs",
+                      AutoCreateSqlTable = true
+                  }).CreateLogger();
+
+
+            builder.Host.UseSerilog();
 
 
             builder.Services
