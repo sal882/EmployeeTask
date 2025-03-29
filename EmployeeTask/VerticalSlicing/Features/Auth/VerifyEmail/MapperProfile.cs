@@ -6,8 +6,9 @@ namespace EmployeeTask.VerticalSlicing.Features.Auth.VerifyEmail
     public class MapperProfile : Profile
     {
         public MapperProfile()
-        {
-            CreateMap<VerifyAccountRequest, VerifyOTPByEmailCommand>();
+        { 
+            CreateMap<VerifyAccountRequest, VerifyOTPByEmailCommand>()
+            .ConstructUsing(src => new VerifyOTPByEmailCommand(src.Email, src.OTP));
         }
     }
 }
